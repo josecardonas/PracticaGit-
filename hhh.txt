@@ -1,0 +1,256 @@
+﻿<?php
+
+/**
+ * Este módulo es de prueba para el Proyecto SID Sistema Integrado de Directorio
+ * Modulo Estructura de Ventas
+ * desactivarlos así como asignarles un perfil de usuario.
+ *
+ * @package Modulos
+ * @subpackage ModuloPruebasEdeV
+ * @category Controlador
+ * @author Luis Chacón
+ * @copyright CANTV - Caveguias (2009)
+ * @version Preliminar para Pruebas
+ */
+/* * */
+
+if (!defined('MODULE_FILE')) {
+    die("");
+}
+
+class ModuloPruebasEdeV extends ThemableModule implements runnableModule {
+
+    /**
+     * Referencia al sigleton de vista del módulo
+     * @var ModuloPrueba_view 
+     */
+    var $view;
+
+
+
+
+// quitte para probar
+    /**
+     *
+     * @var type 
+     */
+    private $extension;
+    private $folder;
+
+    function __construct() {
+        parent::__construct();
+        $this->modulename = 'ModuloPruebasEdeV';
+        $this->view = new ModuloPruebasEdeV_view($this);
+
+        
+//        $this->extension = "txt";
+    }
+
+    function run() {
+        ini_set('max_execution_time', 0);
+        ini_set('memory_limit', -1);
+
+        switch ($this->op) {
+            default:
+                $this->Main();
+                break;
+
+            case "GenerateQuery":
+                $this->GenerateQuery(zs::POST("data"));
+                break;
+            case "guardar":
+                $this->guardar(zs::POST("data"));
+                break;
+            case "eliminar":
+                $data = zs::POST("data");
+                $this->eliminar($data["id"]);
+                break;
+            case "modificar":
+                $data = zs::POST("data");
+                $this->modificar($data["id"]);
+                break;            
+            case "filterEjecutivos":
+                $this->filterEjecutivos();
+                break;
+
+            case "qry":
+                $this->GenerateXMLQuery();
+                break;
+
+            case "csv":
+                $this->reporteClientes();
+                break;
+        }
+    }
+
+    private function Main() {
+        global $odb;
+
+    /**La siguiente rutina prueba el objeto dando como resultado un arreglo
+     * Comiezo
+        $estruct = new Region (null,$odb);
+        $rst = $estruct->query(Array());
+        echo "<pre>";     
+        print_r($rst->fetchAll());
+        echo "</pre>";
+     * Fin
+     */
+
+
+
+        $this->_header();
+        chkRole("SELECT");
+
+        // SE DIBUJA EL MENU DE NAVEGACION DE MODULO
+        $this->menu("MODULO ModuloPruebasEdeV", "B");
+        $this->openTable();
+        $this->view->datosejecutivo("qry");
+        $this->closeAndOpenTable("container");
+        $this->view->DataFrame();
+        $this->closeTable();
+        $this->_footer();
+    }
+
+   
+
+  function guardar($data) {
+        $persona = new Agenda();
+        $persona->set("id", $data["id"]);
+        $persona->set("nombre", $data["nombre"]);
+        $persona->set("apellido", $data["apellido"]);
+        $persona->set("direccion", $data["direccion"]);
+        $persona->set("telefono", $data["telefono"]);
+        $persona->add();
+        print_r($persona);
+    }
+
+     function modificar($staff_id) {
+         chkRole("UPDATE");
+        $ejecutivostruc = new Agenda();
+        $ejecutivostruc->set("staff_id", $staff_id["staff_id"]);
+        $ejecutivostruc->set("staff_name", $staff_id["staff_name"]);
+        $ejecutivostruc>set("region_id", $staff_id["region_id"]);
+        $ejecutivostruc->set("departament_id", $staff_id["departament_id"]);
+        $ejecutivostruc->set("unit_id", $staff_id["unit_id"]);
+        $ejecutivostruc->set("stafftype_id", $staff_id["stafftype_id"]);
+        $ejecutivostruc->set("user_name", $staff_id["user_name"]);
+        $ejecutivostruc->add();
+        print_r($ejecutivostruc);
+    }
+    
+    
+    function eliminar($id) {
+        $persona = new Persona($id);
+        //print_r($persona);
+        $algo = $persona->remove();
+        print_r($algo);
+    }
+
+    //
+       /**  function submercados($region_id) {
+        $this->setMode(OUT_MODE_PLAIN);
+    
+        //DEBO COLOCAR  EL OBJETO QUE CONTIENE LOS SUBMERCADO Y LA REGION (UnitSubMarket es el objeto creado ene le cla que contiene estos
+        // campos 4/03/2016 no lo he probado    
+
+        $submercadosregiones = new UnitSubMarket();
+        $result = $submercadosregiones->query(Array("region_id" => $region_id));//cliente funciona
+        $output = "<option value=\"\">-----SELECCIONE-----</option>";
+        while ($row = $result->fetchRow()) {
+            $output.="<option value=\"" . $row["sub_market_id"] . "\">" . $row["sub_market_desc"] . "</option>";
+            // $row["id"]
+        }
+        echo $output;
+    }
+      */
+ /**   private function GenerateQuery($data) {
+        //CABEZERAS ADECUADAS AL FORMTO XML A ARROJAR
+        $this->setMode(OUT_MODE_JSON);
+        $this->_header();
+
+        //SETEO LOS VALORES POR DEFECTO DE ORDENAMIENTO
+        if (!$sortname)
+            $sortname = 'staff_id';
+        if (!$sortorder)
+            $sortorder = 'asc';
+
+        $sort = $sortname . " " . $sortorder;
+
+        //TRAIGO EL ARRAY DE OBJETOS CONSULTADOS
+        $qryFields["staff_id"] = $data["staff_id"];
+        $qryFields["staff_name"] = $data["staff_name"];
+        qryFields["departament_id"] = $data["departament_id"];
+        $qryFields["region_id"] = $data["region_id"];
+        $qryFields["unit_id"] = $data["unit_id"]);
+        $qryFields["stafftype_id"] = $data["stafftype_id"];
+        $qryFields["user_name"] = $data["user_name"];
+        $
+        $personal = new Personal();
+        $retval = $personal->query($qryFields, $sort);
+
+        $fields = array("staff_id", "staff_name",  "departament_id","region_id","unit_id,"departament_id", "stafftype_id","user_name" );
+        $xml = new jsonGenerator($retval, "id", $fields);
+        $xml->getJson();
+    }
+*/
+
+       private function GenerateQuery($data) {
+        //CABEZERAS ADECUADAS AL FORMTO XML A ARROJAR
+        $this->setMode(OUT_MODE_JSON);
+        $this->_header();
+
+        //SETEO LOS VALORES POR DEFECTO DE ORDENAMIENTO
+        if (!$sortname)
+            $sortname = 'id';
+        if (!$sortorder)
+            $sortorder = 'asc';
+
+        $sort = $sortname . " " . $sortorder;
+
+        //TRAIGO EL ARRAY DE OBJETOS CONSULTADOS
+        $qryFields["id"] = $data["id"];
+        $qryFields["lower(nombre)"] = lower($data["nombre"]);
+        $qryFields["ubicacion"] = $data["ubicacion"];
+        $qryFields["unidad"] = lower($data["unidad"]);
+        $qryFields["mercado"] = zs::POST("mercado");
+        $qryFields["canal"] = zs::POST("canal");
+        $qryFields["productos"] = zs::POST("productos");
+        $personal = new Personal();
+        $retval = $personal->query($qryFields, $sort);
+
+        $fields = array("id", "nombre", "ubicacion", "unidad", "mercado", "canal","productos", );
+        $xml = new jsonGenerator($retval, "id", $fields);
+        $xml->getJson();
+
+}
+
+ 
+
+   
+
+}
+
+
+  
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+?>
+
+
+
+
+
+
+    
